@@ -78,7 +78,7 @@ def test_complete_already_completed():
     service.add_task("x")
     service.complete_task(1)
     message = service.complete_task(1)
-    assert message == "Task x is already completed"
+    assert message == "Task 1 is already completed"
 
 
 def test_complete_not_found():

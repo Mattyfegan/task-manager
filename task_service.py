@@ -48,7 +48,7 @@ class TaskService:
             return f'Task id {task_id} not found'
         
         if task["completed"]:
-            return f'Task {task["title"]} is already completed'
+            return f'Task {task_id} is already completed'
         
         task["completed"] = True
         return f'Task {task["title"]} completed!'
