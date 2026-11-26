@@ -2,12 +2,9 @@ import sys
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-# ``task_service`` lives in the repository root, one level above this file.
-# Put that root on the path so the app imports whether it is started from the
-# repository root (``uvicorn api.main:app``) or from inside ``api/``
-# (``uvicorn main:app``).
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
@@ -16,7 +13,7 @@ from task_service import TaskService
 
 
 class TaskCreate(BaseModel):
-    title: str
+    title: str = Field(min_length = 1, max_length = 100)
 
 app = FastAPI()
 
@@ -48,21 +45,21 @@ def get_task(task_id: int):
 
 @app.post("/tasks", status_code=201)
 def add_task(task : TaskCreate):
-    result = tasks.add_task(task.title)
+    success, result = tasks.add_task(task.title)
 
-    if result == "Invalid title!" or result == "Title is too long!":
+    if not success:
         raise HTTPException(
             status_code = 400,
             detail = result
         )
 
-    return {"message": result}
+    return {"message": f"task {result["title"]} has been added"}
 
 @app.delete("/tasks/{task_id}")
 def delete_task(task_id: int):
-    result = tasks.delete_task(task_id)
+    success, result = tasks.delete_task(task_id)
 
-    if result == "Task not found":
+    if not success:
         raise HTTPException(
             status_code = 404,
             detail = result
@@ -77,17 +74,11 @@ def delete_all_tasks():
 
 @app.patch("/tasks/{task_id}")
 def complete_task(task_id: int):
-    result = tasks.complete_task(task_id)
+    success, result = tasks.complete_task(task_id)
 
-    if result == f'Task id {task_id} not found':
+    if not success:
         raise HTTPException(
             status_code = 404,
-            detail = result
-        )
-
-    if result == f'Task {task_id} is already completed':
-        raise HTTPException(
-            status_code = 409,
             detail = result
         )
 
